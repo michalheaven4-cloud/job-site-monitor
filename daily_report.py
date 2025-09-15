@@ -533,8 +533,8 @@ def send_report_to_api(all_result, today_result):
         today = datetime.now().strftime("%Y-%m-%d")
         json_data = {
             'report_date': today,
-            'all_jobs_analysis': all_result,
-            'today_jobs_analysis': today_result,
+            'all_result': all_result,
+            'today_result': today_result,
             'generated_at': datetime.now().isoformat(),
             'source': 'github_actions'
         }
