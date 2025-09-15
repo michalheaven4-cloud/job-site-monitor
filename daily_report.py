@@ -586,17 +586,17 @@ def main():
     analyzer = AlbamonAnalyzerCLI()
     
     # 전체 공고 분석
-    print("\n1️⃣ 전체 공고 분석 시작...")
-    all_result = analyzer.comprehensive_job_analysis('ALL')
+    # print("\n1️⃣ 전체 공고 분석 시작...")
+    # all_result = analyzer.comprehensive_job_analysis('ALL')
     
-    if all_result:
-        print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
-        print(f"   - 자사: {all_result['albamon_count']:,}개")
-        print(f"   - 잡코리아: {all_result['jobkorea_count']:,}개") 
-        print(f"   - 워크넷: {all_result['worknet_count']:,}개")
-    else:
-        print("❌ 전체 공고 분석 실패")
-        return 1
+    # if all_result:
+    #     print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
+    #     print(f"   - 자사: {all_result['albamon_count']:,}개")
+    #     print(f"   - 잡코리아: {all_result['jobkorea_count']:,}개") 
+    #     print(f"   - 워크넷: {all_result['worknet_count']:,}개")
+    # else:
+    #     print("❌ 전체 공고 분석 실패")
+    #     return 1
     
     # 잠시 대기 (API 부하 방지)
     print("\n⏸️ API 부하 방지를 위해 5초 대기...")
