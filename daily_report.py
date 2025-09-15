@@ -564,7 +564,7 @@ def send_report_to_api(all_result, today_result):
         print("✅ API 전송 완료!")
         print(f"응답: {response.status_code}")
         print(f"응답 데이터")
-        print(json.dumps(response.data, indent=2, ensure_ascii=False))
+        print(response.json())
 
         return True
 
