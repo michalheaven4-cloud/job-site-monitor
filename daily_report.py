@@ -542,7 +542,12 @@ def send_report_to_api(all_result, today_result):
         # API 요청 헤더
         headers = {
             'Content-Type': 'application/json',
-            'Authorization': f'Bearer {api_password}'
+            'Authorization': f'Bearer {api_password}',
+            "User-Agent": (
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) "
+                "Chrome/114.0.0.0 Safari/537.36"
+            )
         }
 
         # API 전송 전에 JSON 출력
@@ -565,10 +570,6 @@ def send_report_to_api(all_result, today_result):
         print(f"응답: {response.status_code}")
 
         try:
-            resp_json = response.json()
-            print("응답 JSON:")
-            print(json.dumps(resp_json, indent=2, ensure_ascii=False))
-
             # success 값 확인
             if resp_json.get("success"):
                 print("서버에서 성공적으로 처리했습니다 ✅")
