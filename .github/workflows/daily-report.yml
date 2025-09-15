@@ -29,13 +29,6 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install requests pandas
-
-    - name: Network test
-      run: |
-        echo "🌐 네트워크 진단 시작..."
-        ping -c 4 www.alba.co.kr || true
-        curl -v -I https://www.alba.co.kr/collect/mon/search || true
-        echo "✅ 네트워크 진단 완료"
         
     - name: Run daily analysis and send report
       env:
