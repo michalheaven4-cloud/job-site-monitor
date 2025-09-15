@@ -545,6 +545,10 @@ def send_report_to_api(all_result, today_result):
             'Authorization': f'Bearer {api_password}'
         }
 
+        # API 전송 전에 JSON 출력
+        print("=== 전송할 JSON 데이터 ===")
+        print(json.dumps(json_data, indent=2, ensure_ascii=False))
+
         # API 전송
         print(f"📡 API로 데이터 전송 중... {api_url}")
 
