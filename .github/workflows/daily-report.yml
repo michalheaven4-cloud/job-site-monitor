@@ -11,6 +11,10 @@ on:
 jobs:
   analyze-and-report:
     runs-on: ubuntu-latest
+    env:
+      PYTHONUTF8: 1
+      LANG: C.UTF-8
+      LC_ALL: C.UTF-8
     
     steps:
     - name: Checkout repository
