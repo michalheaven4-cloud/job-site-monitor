@@ -508,11 +508,16 @@ def format_report_html(all_result, today_result):
     return html_content
 
 
-def send_email_report(all_result, today_result):
-    """이메일로 리포트 발송"""
-    
-    if not EMAIL_AVAILABLE:
-        print("❌ 이메일 모듈을 사용할 수 없습니다. 분석 결과만 출력합니다.")
+def send_report_to_api(all_result, today_result):
+    """API로 리포트 데이터 전송"""
+
+    # 환경 변수에서 API 설정 가져오기
+    api_url = os.getenv('REPORT_API_URL')
+    api_password = os.getenv('REPORT_API_PASSWORD')
+
+    if not api_url or not api_password:
+        print("❌ API 설정이 완료되지 않았습니다.")
+        print("필요한 환경 변수: REPORT_API_URL, REPORT_API_PASSWORD")
         print("\n=== 분석 결과 요약 ===")
         if all_result:
             print(f"전체 공고: {all_result['total_count']:,}개")
@@ -522,89 +527,49 @@ def send_email_report(all_result, today_result):
         if today_result:
             print(f"오늘 공고: {today_result['total_count']:,}개")
         return False
-    
-    # 환경 변수에서 이메일 설정 가져오기
-    smtp_server = os.getenv('SMTP_SERVER', 'smtp.gmail.com')
-    smtp_port = int(os.getenv('SMTP_PORT', '587'))
-    sender_email = os.getenv('SENDER_EMAIL')
-    sender_password = os.getenv('SENDER_PASSWORD')
-    receiver_email = os.getenv('RECEIVER_EMAIL')
-    
-    if not all([sender_email, sender_password, receiver_email]):
-        print("❌ 이메일 설정이 완료되지 않았습니다. 환경 변수를 확인하세요.")
-        print("필요한 환경 변수: SENDER_EMAIL, SENDER_PASSWORD, RECEIVER_EMAIL")
-        return False
-    
+
     try:
-        # 이메일 메시지 구성
-        msg = MimeMultipart('alternative')
-        
-        # 제목 생성
+        # JSON 데이터 구성
         today = datetime.now().strftime("%Y-%m-%d")
-        total_jobs = all_result['total_count'] if all_result else 0
-        today_jobs = today_result['total_count'] if today_result else 0
-        
-        msg['Subject'] = f"📊 알바몬 공고 분석 리포트 {today} (전체: {total_jobs:,}개, 오늘: {today_jobs:,}개)"
-        msg['From'] = sender_email
-        msg['To'] = receiver_email
-        
-        # HTML 리포트 생성
-        html_content = format_report_html(all_result, today_result)
-        html_part = MimeText(html_content, 'html', 'utf-8')
-        msg.attach(html_part)
-        
-        # 텍스트 버전도 추가
-        text_content = f"""
-알바몬 공고 분석 리포트 - {today}
-
-=== 전체 공고 분석 ===
-전체 공고: {all_result['total_count']:,}개
-- 자사 공고: {all_result['albamon_count']:,}개 ({all_result['albamon_count']/all_result['total_count']*100:.1f}%)
-- 잡코리아: {all_result['jobkorea_count']:,}개 ({all_result['jobkorea_count']/all_result['total_count']*100:.1f}%)
-- 워크넷: {all_result['worknet_count']:,}개 ({all_result['worknet_count']/all_result['total_count']*100:.1f}%)
-
-=== 오늘 공고 분석 ===
-오늘 공고: {today_result['total_count']:,}개
-- 자사 공고: {today_result['albamon_count']:,}개
-- 잡코리아: {today_result['jobkorea_count']:,}개  
-- 워크넷: {today_result['worknet_count']:,}개
-
-GitHub Actions 자동 생성 리포트
-        """ if all_result and today_result else "분석 결과를 생성할 수 없습니다."
-        
-        text_part = MimeText(text_content, 'plain', 'utf-8')
-        msg.attach(text_part)
-        
-        # JSON 데이터 첨부
         json_data = {
             'report_date': today,
             'all_jobs_analysis': all_result,
             'today_jobs_analysis': today_result,
-            'generated_at': datetime.now().isoformat()
+            'generated_at': datetime.now().isoformat(),
+            'source': 'github_actions'
         }
-        
-        json_attachment = MimeBase('application', 'json')
-        json_attachment.set_payload(json.dumps(json_data, ensure_ascii=False, indent=2).encode('utf-8'))
-        encoders.encode_base64(json_attachment)
-        json_attachment.add_header(
-            'Content-Disposition',
-            f'attachment; filename="job_analysis_{today}.json"'
+
+        # API 요청 헤더
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {api_password}'
+        }
+
+        # API 전송
+        print(f"📡 API로 데이터 전송 중... {api_url}")
+
+        response = requests.post(
+            api_url,
+            json=json_data,
+            headers=headers,
+            timeout=30
         )
-        msg.attach(json_attachment)
-        
-        # 이메일 발송
-        print(f"📧 이메일 발송 중... {sender_email} → {receiver_email}")
-        
-        with smtplib.SMTP(smtp_server, smtp_port) as server:
-            server.starttls()
-            server.login(sender_email, sender_password)
-            server.send_message(msg)
-        
-        print("✅ 이메일 발송 완료!")
+
+        response.raise_for_status()
+
+        print("✅ API 전송 완료!")
+        print(f"응답: {response.status_code}")
+
         return True
-        
+
+    except requests.exceptions.RequestException as e:
+        print(f"❌ API 전송 실패: {e}")
+        if hasattr(e, 'response') and e.response is not None:
+            print(f"응답 코드: {e.response.status_code}")
+            print(f"응답 내용: {e.response.text}")
+        return False
     except Exception as e:
-        print(f"❌ 이메일 발송 실패: {e}")
+        print(f"❌ 예상치 못한 오류: {e}")
         return False
 
 
@@ -649,15 +614,15 @@ def main():
         print("❌ 오늘 공고 분석 실패")
         return 1
     
-    # 이메일 발송
-    print("\n3️⃣ 이메일 리포트 발송 시작...")
-    email_success = send_email_report(all_result, today_result)
-    
-    if email_success:
+    # API 전송
+    print("\n3️⃣ API 리포트 전송 시작...")
+    api_success = send_report_to_api(all_result, today_result)
+
+    if api_success:
         print("✅ 모든 작업 완료!")
         return 0
     else:
-        print("⚠️ 분석은 완료되었으나 이메일 발송 실패")
+        print("⚠️ 분석은 완료되었으나 API 전송 실패")
         return 1
 
 

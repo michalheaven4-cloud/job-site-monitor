@@ -28,12 +28,9 @@ jobs:
         
     - name: Run daily analysis and send report
       env:
-        # GitHub Secrets에서 이메일 설정 가져오기
-        SMTP_SERVER: ${{ secrets.SMTP_SERVER }}
-        SMTP_PORT: ${{ secrets.SMTP_PORT }}
-        SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
-        SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
-        RECEIVER_EMAIL: ${{ secrets.RECEIVER_EMAIL }}
+        # GitHub Secrets에서 API 설정 가져오기
+        REPORT_API_URL: ${{ secrets.REPORT_API_URL }}
+        REPORT_API_PASSWORD: ${{ secrets.REPORT_API_PASSWORD }}
       run: |
         echo "🚀 Starting daily job analysis..."
         python daily_report.py
