@@ -563,8 +563,20 @@ def send_report_to_api(all_result, today_result):
 
         print("✅ API 전송 완료!")
         print(f"응답: {response.status_code}")
-        print(f"응답 데이터")
-        print(json.dumps(response, indent=2, ensure_ascii=False))
+
+        try:
+            resp_json = response.json()
+            print("응답 JSON:")
+            print(json.dumps(resp_json, indent=2, ensure_ascii=False))
+
+            # success 값 확인
+            if resp_json.get("success"):
+                print("서버에서 성공적으로 처리했습니다 ✅")
+            else:
+                print("서버 처리 실패 ❌", resp_json)
+        except ValueError:
+            print("JSON 파싱 실패, 응답 원문:")
+            print(response.text)
 
         return True
 
