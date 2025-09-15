@@ -590,6 +590,13 @@ def main():
     # 전체 공고 분석
     # print("\n1️⃣ 전체 공고 분석 시작...")
     # all_result = analyzer.comprehensive_job_analysis('ALL')
+    all_result = {
+        "total_count": 0,
+        "albamon_count": 0,
+        "jobkorea_count": 0,
+        "worknet_count": 0,
+        "detailed_counts": {}
+    }
     
     # if all_result:
     #     print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
