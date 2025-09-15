@@ -576,6 +576,7 @@ def send_report_to_api(all_result, today_result):
                 print("서버 처리 실패 ❌", resp_json)
         except ValueError:
             print("JSON 파싱 실패, 응답 원문:")
+            response.encoding = 'utf-8'
             print(response.text)
 
         return True
