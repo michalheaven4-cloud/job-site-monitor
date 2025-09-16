@@ -3,7 +3,7 @@ name: Daily Job Analysis Report
 on:
   schedule:
     # 매일 한국시간 11:00 (UTC 02:00)에 실행
-    - cron: '0 4 * * *'
+    - cron: '0 2 * * *'
   
   # 수동 실행도 가능하도록 설정
   workflow_dispatch:
