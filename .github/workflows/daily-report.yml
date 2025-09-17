@@ -1,11 +1,11 @@
-name: Daily Job Analysis Report
+name: Daily Job Analysis Report (Test)
 
 on:
   schedule:
-    # 매일 한국시간 10:00 (UTC 01:00)에 실행
-    - cron: '*/5 3 * * *'
+    # 한국시간 14:00 ~ 15:55 (UTC 05:00 ~ 06:55), 5분마다 실행
+    - cron: "*/5 5-6 * * *"
   
-  # 수동 실행도 가능하도록 설정
+  # 수동 실행도 가능
   workflow_dispatch:
 
 jobs:
@@ -19,7 +19,31 @@ jobs:
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
-      
+
+    # 캐시에서 마지막 실행 기록 복원
+    - name: Restore last run cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/daily-job
+        key: daily-job-cache
+
+    # 오늘 이미 실행했으면 스킵
+    - name: Check if already ran today
+      id: check
+      run: |
+        TODAY=$(date -u +"%Y-%m-%d")
+        LOGFILE="$HOME/.cache/daily-job/last_run.txt"
+
+        if [ -f "$LOGFILE" ]; then
+          LAST=$(cat "$LOGFILE")
+          if [ "$LAST" = "$TODAY" ]; then
+            echo "Already ran today ($TODAY). Skipping..."
+            exit 0
+          fi
+        fi
+
+        echo $TODAY > "$LOGFILE"
+
     - name: Set up Python
       uses: actions/setup-python@v4
       with:
@@ -32,13 +56,19 @@ jobs:
         
     - name: Run daily analysis and send report
       env:
-        # GitHub Secrets에서 API 설정 가져오기
         REPORT_API_URL: ${{ secrets.REPORT_API_URL }}
         REPORT_API_PASSWORD: ${{ secrets.REPORT_API_PASSWORD }}
       run: |
         echo "🚀 Starting daily job analysis..."
         python daily_report.py
-        
+
+    # 캐시에 오늘 실행 기록 저장
+    - name: Save last run cache
+      uses: actions/cache@v4
+      with:
+        path: ~/.cache/daily-job
+        key: daily-job-cache
+
     - name: Upload analysis results (optional)
       if: always()
       uses: actions/upload-artifact@v4
