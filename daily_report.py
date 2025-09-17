@@ -35,7 +35,7 @@ class AlbamonAnalyzerCLI:
         self.base_url = 'https://bff-general.albamon.com'
         self.headers = {
             'Accept': '*/*',
-            'User-Agent': 'job-site-monitor/1.0.0',
+            'User-Agent': 'job-site/1.0.0',
             'origin': 'https://www.albamon.com',
             'Content-Type': 'application/json',
             'cookie': (
@@ -369,145 +369,6 @@ class AlbamonAnalyzerCLI:
             print(f"분석 중 오류 발생: {e}")
             return None
 
-
-def format_report_html(all_result, today_result):
-    """HTML 형식으로 리포트 생성"""
-    
-    def format_number(num):
-        return f"{num:,}"
-    
-    def calculate_percentage(part, total):
-        if total == 0:
-            return "0.0"
-        return f"{(part / total * 100):.1f}"
-    
-    # 현재 시간
-    now = datetime.now()
-    report_time = now.strftime("%Y년 %m월 %d일 %H시 %M분")
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            body {{ font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }}
-            .container {{ max-width: 800px; margin: 0 auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }}
-            .header {{ text-align: center; color: #333; border-bottom: 2px solid #4CAF50; padding-bottom: 10px; margin-bottom: 20px; }}
-            .section {{ margin: 20px 0; padding: 15px; border-radius: 8px; }}
-            .all-jobs {{ background-color: #e8f5e8; border-left: 4px solid #4CAF50; }}
-            .today-jobs {{ background-color: #e3f2fd; border-left: 4px solid #2196F3; }}
-            .metrics {{ display: flex; justify-content: space-around; margin: 15px 0; }}
-            .metric {{ text-align: center; }}
-            .metric-value {{ font-size: 24px; font-weight: bold; color: #333; }}
-            .metric-label {{ font-size: 12px; color: #666; margin-top: 5px; }}
-            .percentage {{ font-size: 14px; color: #888; }}
-            .footer {{ text-align: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid #ddd; color: #666; font-size: 12px; }}
-            .range-info {{ background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin: 10px 0; font-size: 14px; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="header">
-                <h1>📊 알바몬 공고 분석 리포트</h1>
-                <p>{report_time} 자동 생성</p>
-            </div>
-    """
-    
-    # 전체 공고 분석 결과
-    if all_result and all_result['total_count'] > 0:
-        html_content += f"""
-            <div class="section all-jobs">
-                <h2>🌐 전체 공고 분석</h2>
-                <div class="metrics">
-                    <div class="metric">
-                        <div class="metric-value">{format_number(all_result['total_count'])}</div>
-                        <div class="metric-label">전체 공고</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(all_result['albamon_count'])}</div>
-                        <div class="metric-label">자사 공고</div>
-                        <div class="percentage">{calculate_percentage(all_result['albamon_count'], all_result['total_count'])}%</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(all_result['jobkorea_count'])}</div>
-                        <div class="metric-label">잡코리아</div>
-                        <div class="percentage">{calculate_percentage(all_result['jobkorea_count'], all_result['total_count'])}%</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(all_result['worknet_count'])}</div>
-                        <div class="metric-label">워크넷</div>
-                        <div class="percentage">{calculate_percentage(all_result['worknet_count'], all_result['total_count'])}%</div>
-                    </div>
-                </div>
-        """
-        
-        # 페이지 범위 정보
-        if all_result.get('jobkorea_start_page') or all_result.get('worknet_start_page'):
-            html_content += '<div class="range-info">'
-            if all_result.get('jobkorea_start_page'):
-                jk_range = f"{all_result['jobkorea_start_page']}~{all_result['jobkorea_end_page']}페이지"
-                html_content += f"💼 잡코리아 범위: {jk_range}<br>"
-            if all_result.get('worknet_start_page'):
-                wn_range = f"{all_result['worknet_start_page']}~{all_result['worknet_end_page']}페이지"
-                html_content += f"🏛️ 워크넷 범위: {wn_range}<br>"
-            html_content += f"⏱️ 분석 시간: {all_result['search_duration']:.2f}초"
-            html_content += '</div>'
-        
-        html_content += '</div>'
-    
-    # 오늘 공고 분석 결과
-    if today_result and today_result['total_count'] > 0:
-        html_content += f"""
-            <div class="section today-jobs">
-                <h2>📅 오늘 등록 공고 분석</h2>
-                <div class="metrics">
-                    <div class="metric">
-                        <div class="metric-value">{format_number(today_result['total_count'])}</div>
-                        <div class="metric-label">전체 공고</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(today_result['albamon_count'])}</div>
-                        <div class="metric-label">자사 공고</div>
-                        <div class="percentage">{calculate_percentage(today_result['albamon_count'], today_result['total_count'])}%</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(today_result['jobkorea_count'])}</div>
-                        <div class="metric-label">잡코리아</div>
-                        <div class="percentage">{calculate_percentage(today_result['jobkorea_count'], today_result['total_count'])}%</div>
-                    </div>
-                    <div class="metric">
-                        <div class="metric-value">{format_number(today_result['worknet_count'])}</div>
-                        <div class="metric-label">워크넷</div>
-                        <div class="percentage">{calculate_percentage(today_result['worknet_count'], today_result['total_count'])}%</div>
-                    </div>
-                </div>
-                <div class="range-info">
-                    ⏱️ 분석 시간: {today_result['search_duration']:.2f}초
-                </div>
-            </div>
-        """
-    elif today_result and today_result['total_count'] == 0:
-        html_content += """
-            <div class="section today-jobs">
-                <h2>📅 오늘 등록 공고 분석</h2>
-                <p style="text-align: center; color: #666;">오늘 등록된 공고가 없습니다.</p>
-            </div>
-        """
-    
-    html_content += """
-            <div class="footer">
-                <p>🤖 GitHub Actions 자동 생성 리포트</p>
-                <p>Job Site Monitor - Automated Daily Report</p>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    return html_content
-
-
 def send_report_to_api(all_result, today_result):
     """API로 리포트 데이터 전송"""
 
@@ -588,17 +449,16 @@ def main():
     
     # 전체 공고 분석
     print("\n1️⃣ 전체 공고 분석 시작...")
-    # all_result = analyzer.comprehensive_job_analysis('ALL')
-    all_result = None
+    all_result = analyzer.comprehensive_job_analysis('ALL')
     
-    # if all_result:
-    #     print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
-    #     print(f"   - 자사: {all_result['albamon_count']:,}개")
-    #     print(f"   - 잡코리아: {all_result['jobkorea_count']:,}개") 
-    #     print(f"   - 워크넷: {all_result['worknet_count']:,}개")
-    # else:
-    #     print("❌ 전체 공고 분석 실패")
-    #     return 1
+    if all_result:
+        print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
+        print(f"   - 자사: {all_result['albamon_count']:,}개")
+        print(f"   - 잡코리아: {all_result['jobkorea_count']:,}개") 
+        print(f"   - 워크넷: {all_result['worknet_count']:,}개")
+    else:
+        print("❌ 전체 공고 분석 실패")
+        return 1
     
     # 잠시 대기 (API 부하 방지)
     print("\n⏸️ API 부하 방지를 위해 5초 대기...")
@@ -606,20 +466,19 @@ def main():
     
     # 오늘 공고 분석
     print("\n2️⃣ 오늘 공고 분석 시작...")
-    # today_result = analyzer.comprehensive_job_analysis('TODAY')
-    today_result = None
-    
-    # if today_result:
-    #     print(f"✅ 오늘 공고 분석 완료: {today_result['total_count']:,}개")
-    #     if today_result['total_count'] > 0:
-    #         print(f"   - 자사: {today_result['albamon_count']:,}개")
-    #         print(f"   - 잡코리아: {today_result['jobkorea_count']:,}개")
-    #         print(f"   - 워크넷: {today_result['worknet_count']:,}개")
-    #     else:
-    #         print("   - 오늘 등록된 공고 없음")
-    # else:
-    #     print("❌ 오늘 공고 분석 실패")
-    #     return 1
+    today_result = analyzer.comprehensive_job_analysis('TODAY')
+
+    if today_result:
+        print(f"✅ 오늘 공고 분석 완료: {today_result['total_count']:,}개")
+        if today_result['total_count'] > 0:
+            print(f"   - 자사: {today_result['albamon_count']:,}개")
+            print(f"   - 잡코리아: {today_result['jobkorea_count']:,}개")
+            print(f"   - 워크넷: {today_result['worknet_count']:,}개")
+        else:
+            print("   - 오늘 등록된 공고 없음")
+    else:
+        print("❌ 오늘 공고 분석 실패")
+        return 1
     
     # API 전송
     print("\n3️⃣ API 리포트 전송 시작...")
