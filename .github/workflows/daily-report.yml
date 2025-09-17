@@ -3,7 +3,7 @@ name: Daily Job Analysis Report
 on:
   schedule:
     # 한국시간 10:00 ~ 11:55 (UTC 01:00 ~ 02:55), 5분마다 실행
-    - cron: "*/5 5-7 * * *"
+    - cron: "*/5 5-8 * * *"
   
   # 수동 실행도 가능
   workflow_dispatch:
@@ -20,12 +20,22 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
+    # 캐시에서 마지막 실행 기록 복원
+    - name: Restore last run cache
+      uses: actions/cache/restore@v4
+      with:
+        path: ~/.cache/daily-job
+        key: daily-job-cache
+
+    # 오늘 이미 실행했으면 스킵
     - name: Check if already ran today
       id: check
       run: |
         TODAY=$(date -u +"%Y-%m-%d")
-        LOGFILE="$GITHUB_WORKSPACE/last_run.txt"
-        mkdir -p $(dirname "$LOGFILE")
+        LOGDIR="$HOME/.cache/daily-job"
+        LOGFILE="$LOGDIR/last_run.txt"
+
+        mkdir -p "$LOGDIR"
 
         if [ -f "$LOGFILE" ]; then
           LAST=$(cat "$LOGFILE")
@@ -58,6 +68,14 @@ jobs:
       run: |
         echo "🚀 Starting daily job analysis..."
         python daily_report.py
+
+    # 캐시에 오늘 실행 기록 저장
+    - name: Save last run cache
+      if: steps.check.outputs.skip == 'false'
+      uses: actions/cache/save@v4
+      with:
+        path: ~/.cache/daily-job
+        key: daily-job-cache
 
     - name: Upload analysis results (optional)
       if: steps.check.outputs.skip == 'false' && always()
