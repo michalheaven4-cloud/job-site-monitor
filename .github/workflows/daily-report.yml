@@ -32,7 +32,11 @@ jobs:
       id: check
       run: |
         TODAY=$(date -u +"%Y-%m-%d")
-        LOGFILE="$HOME/.cache/daily-job/last_run.txt"
+        LOGDIR="$HOME/.cache/daily-job"
+        LOGFILE="$LOGDIR/last_run.txt"
+
+        # 디렉토리 없으면 생성
+        mkdir -p "$LOGDIR"
 
         if [ -f "$LOGFILE" ]; then
           LAST=$(cat "$LOGFILE")
