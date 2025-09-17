@@ -1,4 +1,4 @@
-name: Daily Job Analysis Report (Test)
+name: Daily Job Analysis Report
 
 on:
   schedule:
