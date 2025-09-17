@@ -2,7 +2,7 @@ name: Daily Job Analysis Report
 
 on:
   schedule:
-    # 한국시간 14:00 ~ 15:55 (UTC 05:00 ~ 06:55), 5분마다 실행
+    # 한국시간 10:00 ~ 11:55 (UTC 01:00 ~ 02:55), 5분마다 실행
     - cron: "*/5 5-7 * * *"
   
   # 수동 실행도 가능
@@ -20,45 +20,38 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 캐시에서 마지막 실행 기록 복원
-    - name: Restore last run cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/daily-job
-        key: daily-job-cache
-
-    # 오늘 이미 실행했으면 스킵
     - name: Check if already ran today
       id: check
       run: |
         TODAY=$(date -u +"%Y-%m-%d")
-        LOGDIR="$HOME/.cache/daily-job"
-        LOGFILE="$LOGDIR/last_run.txt"
-
-        # 디렉토리 없으면 생성
-        mkdir -p "$LOGDIR"
+        LOGFILE="$GITHUB_WORKSPACE/last_run.txt"
+        mkdir -p $(dirname "$LOGFILE")
 
         if [ -f "$LOGFILE" ]; then
           LAST=$(cat "$LOGFILE")
           if [ "$LAST" = "$TODAY" ]; then
-            echo "Already ran today ($TODAY). Skipping..."
+            echo "skip=true" >> $GITHUB_OUTPUT
             exit 0
           fi
         fi
 
         echo $TODAY > "$LOGFILE"
+        echo "skip=false" >> $GITHUB_OUTPUT
 
     - name: Set up Python
+      if: steps.check.outputs.skip == 'false'
       uses: actions/setup-python@v4
       with:
         python-version: '3.11'
         
     - name: Install dependencies
+      if: steps.check.outputs.skip == 'false'
       run: |
         python -m pip install --upgrade pip
         pip install requests pandas
         
     - name: Run daily analysis and send report
+      if: steps.check.outputs.skip == 'false'
       env:
         REPORT_API_URL: ${{ secrets.REPORT_API_URL }}
         REPORT_API_PASSWORD: ${{ secrets.REPORT_API_PASSWORD }}
@@ -66,15 +59,8 @@ jobs:
         echo "🚀 Starting daily job analysis..."
         python daily_report.py
 
-    # 캐시에 오늘 실행 기록 저장
-    - name: Save last run cache
-      uses: actions/cache@v4
-      with:
-        path: ~/.cache/daily-job
-        key: daily-job-cache
-
     - name: Upload analysis results (optional)
-      if: always()
+      if: steps.check.outputs.skip == 'false' && always()
       uses: actions/upload-artifact@v4
       with:
         name: job-analysis-results
