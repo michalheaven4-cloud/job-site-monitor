@@ -589,7 +589,7 @@ def main():
     # 전체 공고 분석
     print("\n1️⃣ 전체 공고 분석 시작...")
     # all_result = analyzer.comprehensive_job_analysis('ALL')
-    all_result = none
+    all_result = None
     
     # if all_result:
     #     print(f"✅ 전체 공고 분석 완료: {all_result['total_count']:,}개")
@@ -607,7 +607,7 @@ def main():
     # 오늘 공고 분석
     print("\n2️⃣ 오늘 공고 분석 시작...")
     # today_result = analyzer.comprehensive_job_analysis('TODAY')
-    today_result = none
+    today_result = None
     
     # if today_result:
     #     print(f"✅ 오늘 공고 분석 완료: {today_result['total_count']:,}개")
