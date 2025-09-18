@@ -2,8 +2,8 @@ name: Daily Job Analysis Report
 
 on:
   schedule:
-    # 한국시간 10:00 ~ 11:55 (UTC 01:00 ~ 02:55), 5분마다 실행
-    - cron: "*/5 1-2 * * *"
+    # 한국시간 09:00 ~ 12:55 (UTC 01:00 ~ 02:55), 5분마다 실행
+    - cron: "*/5 0-3 * * *"
   
   # 수동 실행도 가능
   workflow_dispatch:
