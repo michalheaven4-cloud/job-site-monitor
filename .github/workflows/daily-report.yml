@@ -2,7 +2,7 @@ name: Daily Job Analysis Report
 
 on:
   schedule:
-    # 한국시간 09:00 ~ 12:55 (UTC 01:00 ~ 02:55), 5분마다 실행
+    # 한국시간 09:00 ~ 12:55 (UTC 00:00 ~ 03:55), 5분마다 실행
     - cron: "*/5 0-3 * * *"
   
   # 수동 실행도 가능
@@ -20,34 +20,30 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 캐시에서 마지막 실행 기록 복원
-    - name: Restore last run cache
+    - name: Set DATE env
+      run: echo "DATE=$(date -u +'%Y-%m-%d')" >> $GITHUB_ENV
+
+    # 오늘 날짜 캐시 복원 시도
+    - name: Restore today's run cache
+      id: cache-restore
       uses: actions/cache/restore@v4
       with:
         path: ~/.cache/daily-job
-        key: daily-job-cache
+        key: daily-job-${{ env.DATE }}
 
-    # 오늘 이미 실행했으면 스킵
+    # 오늘 이미 실행됐으면 skip=true, 아니면 skip=false
     - name: Check if already ran today
       id: check
       run: |
-        TODAY=$(date -u +"%Y-%m-%d")
-        LOGDIR="$HOME/.cache/daily-job"
-        LOGFILE="$LOGDIR/last_run.txt"
-
-        mkdir -p "$LOGDIR"
-
-        if [ -f "$LOGFILE" ]; then
-          LAST=$(cat "$LOGFILE")
-          if [ "$LAST" = "$TODAY" ]; then
-            echo "skip=true" >> $GITHUB_OUTPUT
-            exit 0
-          fi
+        if [ "${{ steps.cache-restore.outputs.cache-hit }}" = "true" ]; then
+          echo "skip=true" >> $GITHUB_OUTPUT
+          echo "Already ran today ($DATE). Skipping..."
+        else
+          echo "skip=false" >> $GITHUB_OUTPUT
+          echo "First run today ($DATE). Proceeding..."
         fi
 
-        echo $TODAY > "$LOGFILE"
-        echo "skip=false" >> $GITHUB_OUTPUT
-
+    # 여기서부터는 skip=false일 때만 실행
     - name: Set up Python
       if: steps.check.outputs.skip == 'false'
       uses: actions/setup-python@v4
@@ -69,20 +65,10 @@ jobs:
         echo "🚀 Starting daily job analysis..."
         python daily_report.py
 
-    # 캐시에 오늘 실행 기록 저장
-    - name: Save last run cache
+    # 오늘 날짜 캐시 생성 (첫 실행일 때만)
+    - name: Save today's run cache
       if: steps.check.outputs.skip == 'false'
       uses: actions/cache/save@v4
       with:
         path: ~/.cache/daily-job
-        key: daily-job-cache
-
-    - name: Upload analysis results (optional)
-      if: steps.check.outputs.skip == 'false' && always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: job-analysis-results
-        path: |
-          *.json
-          *.log
-        retention-days: 30
+        key: daily-job-${{ env.DATE }}
