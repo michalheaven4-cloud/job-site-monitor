@@ -66,6 +66,12 @@ jobs:
         python daily_report.py
 
     # 오늘 날짜 캐시 생성 (첫 실행일 때만)
+    - name: Prepare cache marker
+      if: steps.check.outputs.skip == 'false'
+      run: |
+        mkdir -p ~/.cache/daily-job
+        echo "$(date -u +'%Y-%m-%d %H:%M:%S')" > ~/.cache/daily-job/last_run.txt
+
     - name: Save today's run cache
       if: steps.check.outputs.skip == 'false'
       uses: actions/cache/save@v4
